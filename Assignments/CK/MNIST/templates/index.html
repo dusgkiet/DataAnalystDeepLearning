@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nhận dạng chữ số</title>
+    <style>
+      body {
+        text-align: center;
+        font-family: Arial, sans-serif;
+      }
+      canvas {
+        border: 2px solid black;
+        background: black;
+        cursor: crosshair;
+      }
+      button {
+        margin: 10px;
+        padding: 10px;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Nhận dạng chữ số</h1>
+    <canvas id="canvas" width="280" height="280"></canvas>
+    <br />
+    <button onclick="clearCanvas()">Xóa</button>
+    <button onclick="predict()">Dự đoán</button>
+    <h2>Kết quả: <span id="result">?</span></h2>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      let painting = false;
+
+      function startPosition(e) {
+        painting = true;
+        draw(e);
+      }
+      function endPosition() {
+        painting = false;
+        ctx.beginPath();
+      }
+      function draw(e) {
+        if (!painting) return;
+        ctx.lineWidth = 20;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = "white";
+        ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+      }
+
+      canvas.addEventListener("mousedown", startPosition);
+      canvas.addEventListener("mouseup", endPosition);
+      canvas.addEventListener("mousemove", draw);
+
+      function clearCanvas() {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        document.getElementById("result").innerText = "?";
+      }
+
+      function predict() {
+        const imageData = canvas.toDataURL("image/png");
+        fetch("/predict", {
+          method: "POST",
+          body: JSON.stringify({ image: imageData }),
+          headers: { "Content-Type": "application/json" },
+        })
+          .then((response) => response.json())
+          .then(
+            (data) =>
+              (document.getElementById("result").innerText = data.result)
+          )
+          .catch((error) => console.error("Lỗi:", error));
+      }
+    </script>
+  </body>
+</html>
